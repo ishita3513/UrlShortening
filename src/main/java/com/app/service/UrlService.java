@@ -113,6 +113,7 @@ public class UrlService {
         }
         entity.setClickCount(entity.getClickCount() + 1);
         urlRepository.save(entity);
+        urlCacheService.put(entity);
         return entity.getOriginalUrl();
     }
 }
