@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="url"],
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        input[type="url"]:focus,
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-hint {
+            color: #999;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 32px;
+            padding: 24px;
+            background: #f8f9ff;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result.success {
+            display: block;
+        }
+
+        .result h3 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .result-item {
+            margin-bottom: 16px;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .result-value.short-code {
+            color: #667eea;
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            word-break: normal;
+            overflow-x: auto;
+        }
+
+        .result-value.short-url {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 16px;
+            white-space: nowrap;
+            word-break: normal;
+            overflow-x: auto;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .error {
+            display: none;
+            padding: 16px;
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            border-radius: 6px;
+            color: #c0392b;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success-msg {
+            display: none;
+            padding: 16px;
+            background: #efe;
+            border-left: 4px solid #27ae60;
+            border-radius: 6px;
+            color: #228b22;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .success-msg.show {
+            display: block;
+        }
+
+        .qr-section {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .qr-code {
+            display: inline-block;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 32px 0;
+            color: #ccc;
+        }
+
+        .divider::before {
+            content: '─────────────────────';
+        }
+
+        .preset-times {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .preset-btn.active {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 URL Shortener</h1>
+            <p>Create short, shareable links instantly</p>
+        </div>
+
+        <div id="errorMsg" class="error"></div>
+        <div id="successMsg" class="success-msg"></div>
+
+        <form id="urlForm">
+            <div class="form-group">
+                <label for="originalUrl">Long URL *</label>
+                <input 
+                    type="url" 
+                    id="originalUrl" 
+                    name="originalUrl" 
+                    placeholder="https://example.com/very/long/url" 
+                    required
+                    autocomplete="off"
+                >
+                <div class="input-hint">Enter the full URL starting with http:// or https://</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="customAlias">Custom Alias (Optional)</label>
+                    <input 
+                        type="text" 
+                        id="customAlias" 
+                        name="customAlias" 
+                        placeholder="e.g., diwali-sale"
+                        autocomplete="off"
+                    >
+                    <div class="input-hint">Letters, numbers, hyphens only (2-50 chars)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="expiredInDays">Expires In (Days)</label>
+                    <input 
+                        type="number" 
+                        id="expiredInDays" 
+                        name="expiredInDays" 
+                        value="30"
+                        min="1"
+                        max="3650"
+                        autocomplete="off"
+                    >
+                    <div class="preset-times">
+                        <button type="button" class="preset-btn" onclick="setExpiryDays(1)">1 Day</button>
+                        <button type="button" class="preset-btn" onclick="setExpiryDays(7)">1 Week</button>
+                        <button type="button" class="preset-btn preset-btn.active" onclick="setExpiryDays(30)">30 Days</button>
+                        <button type="button" class="preset-btn" onclick="setExpiryDays(365)">1 Year</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">Create Short URL</button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="color: #666; margin-top: 8px; font-size: 14px;">Creating your short URL...</p>
+            </div>
+        </form>
+
+        <div id="resultContainer" class="result">
+            <h3>✅ Your Short URL is Ready!</h3>
+
+            <div class="result-item">
+                <div class="result-label">Short Code</div>
+                <div class="result-value short-code" id="shortCodeDisplay"></div>
+                <button type="button" class="copy-btn" onclick="copyToClipboard('shortCodeDisplay')">Copy Code</button>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Short URL</div>
+                <div class="result-value short-url" id="shortUrlDisplay"></div>
+                <button type="button" class="copy-btn" onclick="copyToClipboard('shortUrlDisplay')">Copy Short URL</button>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Original URL</div>
+                <div class="result-value" id="originalUrlDisplay" style="color: #666;"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Expires On</div>
+                <div class="result-value" id="expiresAtDisplay" style="color: #666;"></div>
+            </div>
+
+            <div class="qr-section">
+                <div class="result-label" style="text-align: left; margin-bottom: 12px;">QR Code</div>
+                <div class="qr-code">
+                    <img id="qrCode" alt="QR Code" style="width: 200px; height: 200px;">
+                </div>
+                <p style="color: #999; font-size: 12px; margin-top: 8px;">Scan with your phone camera</p>
+            </div>
+
+            <button type="button" onclick="resetForm()" style="margin-top: 24px; background: #f0f0f0; color: #333;">Create Another Short URL</button>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('urlForm');
+        const resultContainer = document.getElementById('resultContainer');
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            errorMsg.classList.remove('show');
+            successMsg.classList.remove('show');
+            resultContainer.classList.remove('success');
+            loading.style.display = 'none';
+
+            const originalUrl = document.getElementById('originalUrl').value.trim();
+            const customAlias = document.getElementById('customAlias').value.trim();
+            const expiredInDays = parseInt(document.getElementById('expiredInDays').value) || 30;
+
+            if (!originalUrl) {
+                showError('Please enter a valid URL');
+                return;
+            }
+
+            if (!isValidUrl(originalUrl)) {
+                showError('Please enter a valid URL (must start with http:// or https://)');
+                return;
+            }
+
+            if (customAlias && !isValidAlias(customAlias)) {
+                showError('Custom alias must be 2-50 characters and contain only letters, numbers, and hyphens');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+
+            try {
+                const payload = {
+                    originalUrl: originalUrl
+                };
+                if (customAlias) payload.customAlias = customAlias;
+                if (expiredInDays) payload.expiredInDays = expiredInDays;
+
+                const response = await fetch('/api/urls', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                loading.style.display = 'none';
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    if (response.status === 409) {
+                        showError('This custom alias is already taken. Please try another.');
+                    } else if (response.status === 429) {
+                        showError('Too many requests. Please wait a moment and try again.');
+                    } else {
+                        showError(errorData.detail || 'Failed to create short URL. Please try again.');
+                    }
+                    return;
+                }
+
+                const data = await response.json();
+                displayResult(data);
+                showSuccess('Short URL created successfully!');
+                form.reset();
+                document.getElementById('expiredInDays').value = '30';
+
+            } catch (error) {
+                loading.style.display = 'none';
+                console.error('Error:', error);
+                showError('An error occurred. Please try again. ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return /^https?:\/\/./.test(string);
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function isValidAlias(alias) {
+            return /^[A-Za-z0-9-]{2,50}$/.test(alias);
+        }
+
+        function displayResult(data) {
+            document.getElementById('shortCodeDisplay').textContent = data.shortCode;
+            document.getElementById('shortUrlDisplay').textContent = data.shortUrl;
+            document.getElementById('originalUrlDisplay').textContent = data.originalUrl;
+            
+            const expiresDate = new Date(data.expiresAt);
+            document.getElementById('expiresAtDisplay').textContent = expiresDate.toLocaleString();
+
+            // Generate QR Code using QR Server API
+            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.shortUrl)}`;
+            document.getElementById('qrCode').src = qrCodeUrl;
+
+            resultContainer.classList.add('success');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                showError('Failed to copy to clipboard');
+            });
+        }
+
+        function setExpiryDays(days) {
+            document.getElementById('expiredInDays').value = days;
+        }
+
+        function resetForm() {
+            form.reset();
+            resultContainer.classList.remove('success');
+            document.getElementById('expiredInDays').value = '30';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+        }
+
+        function showSuccess(message) {
+            successMsg.textContent = message;
+            successMsg.classList.add('show');
+            setTimeout(() => {
+                successMsg.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
