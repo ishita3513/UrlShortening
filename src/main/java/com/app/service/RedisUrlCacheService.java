@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -46,16 +47,26 @@ public class RedisUrlCacheService implements UrlCacheService {
             log.warn("Failed to serialize UrlEntity for caching, skipping cache write", e);
             return;
         }
-        if (urlEntity.getShortCode() != null) {
-            redisTemplate.opsForValue().set(SHORT_CODE_PREFIX + urlEntity.getShortCode(), json, TTL);
-        }
-        if (urlEntity.getCustomAlias() != null) {
-            redisTemplate.opsForValue().set(ALIAS_PREFIX + urlEntity.getCustomAlias(), json, TTL);
+        try {
+            if (urlEntity.getShortCode() != null) {
+                redisTemplate.opsForValue().set(SHORT_CODE_PREFIX + urlEntity.getShortCode(), json, TTL);
+            }
+            if (urlEntity.getCustomAlias() != null) {
+                redisTemplate.opsForValue().set(ALIAS_PREFIX + urlEntity.getCustomAlias(), json, TTL);
+            }
+        } catch (DataAccessException e) {
+            log.warn("Redis unavailable, skipping cache write for shortCode={}", urlEntity.getShortCode(), e);
         }
     }
 
     private Optional<UrlEntity> get(String key) {
-        String json = redisTemplate.opsForValue().get(key);
+        String json;
+        try {
+            json = redisTemplate.opsForValue().get(key);
+        } catch (DataAccessException e) {
+            log.warn("Redis unavailable, treating key {} as cache miss", key, e);
+            return Optional.empty();
+        }
         if (json == null) {
             return Optional.empty();
         }

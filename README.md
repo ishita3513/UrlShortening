@@ -79,7 +79,7 @@ exercise the API manually:
 **Create a short URL:**
 
 ```bash
-curl -X POST http://localhost:8080/api/urls \
+curl -X POST http://localhost:8080/urls \
   -H "Content-Type: application/json" \
   -d '{"originalUrl": "https://example.com/some/long/path", "expiredInDays": 7}'
 ```
@@ -98,7 +98,7 @@ Expect a `302 Found` with a `Location` header pointing back at the original URL.
 **Custom alias + conflict check:**
 
 ```bash
-curl -X POST http://localhost:8080/api/urls \
+curl -X POST http://localhost:8080/urls \
   -H "Content-Type: application/json" \
   -d '{"originalUrl": "https://example.com", "customAlias": "my-alias"}'
 
@@ -108,7 +108,7 @@ curl -X POST http://localhost:8080/api/urls \
 **Validation errors** — expect `400 Bad Request`:
 
 ```bash
-curl -X POST http://localhost:8080/api/urls \
+curl -X POST http://localhost:8080/urls \
   -H "Content-Type: application/json" \
   -d '{"originalUrl": "not-a-url"}'
 ```
@@ -122,10 +122,10 @@ lifetime (not a rolling window); the 11th request returns `429 Too Many Requests
 
 | Method | Path            | Description                          |
 |--------|-----------------|---------------------------------------|
-| POST   | `/api/urls`     | Create a short URL                    |
+| POST   | `/urls`     | Create a short URL                    |
 | GET    | `/{shortCode}`  | Redirect to the original URL          |
 
-### `POST /api/urls` request body
+### `POST /urls` request body
 
 | Field           | Required | Rules                                              |
 |------------------|----------|-----------------------------------------------------|

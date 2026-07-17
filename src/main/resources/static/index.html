@@ -460,7 +460,7 @@
                 if (customAlias) payload.customAlias = customAlias;
                 if (expiredInDays) payload.expiredInDays = expiredInDays;
 
-                const response = await fetch('/api/urls', {
+                const response = await fetch('/urls', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
