@@ -384,13 +384,13 @@
             <div class="result-item">
                 <div class="result-label">Short Code</div>
                 <div class="result-value short-code" id="shortCodeDisplay"></div>
-                <button type="button" class="copy-btn" onclick="copyToClipboard('shortCodeDisplay')">Copy Code</button>
+                <button type="button" class="copy-btn" onclick="copyToClipboard('shortCodeDisplay', this)">Copy Code</button>
             </div>
 
             <div class="result-item">
                 <div class="result-label">Short URL</div>
                 <div class="result-value short-url" id="shortUrlDisplay"></div>
-                <button type="button" class="copy-btn" onclick="copyToClipboard('shortUrlDisplay')">Copy Short URL</button>
+                <button type="button" class="copy-btn" onclick="copyToClipboard('shortUrlDisplay', this)">Copy Short URL</button>
             </div>
 
             <div class="result-item">
@@ -526,12 +526,11 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function copyToClipboard(elementId) {
+        function copyToClipboard(elementId, btn) {
             const element = document.getElementById(elementId);
             const text = element.textContent;
-            
+
             navigator.clipboard.writeText(text).then(() => {
-                const btn = event.target;
                 const originalText = btn.textContent;
                 btn.textContent = '✓ Copied!';
                 setTimeout(() => {
